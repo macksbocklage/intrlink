@@ -66,4 +66,58 @@ CREATE POLICY "Users can delete their own documents" ON storage.objects
   FOR DELETE USING (
     bucket_id = 'documents' AND 
     (storage.foldername(name))[1] = auth.uid()::text
+  );
+
+-- Create conversations table
+CREATE TABLE conversations (
+  id UUID DEFAULT gen_random_uuid() PRIMARY KEY,
+  organization_id UUID,
+  user_id UUID NOT NULL,
+  title TEXT,
+  created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
+  updated_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
+);
+
+-- Create messages table
+CREATE TABLE messages (
+  id UUID DEFAULT gen_random_uuid() PRIMARY KEY,
+  conversation_id UUID NOT NULL REFERENCES conversations(id) ON DELETE CASCADE,
+  role TEXT CHECK (role IN ('user', 'assistant')) NOT NULL,
+  content TEXT NOT NULL,
+  citations JSONB,
+  created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
+);
+
+-- Indexes for performance
+CREATE INDEX idx_conversations_user_id ON conversations(user_id);
+CREATE INDEX idx_conversations_org_id ON conversations(organization_id);
+CREATE INDEX idx_messages_conversation_id ON messages(conversation_id);
+CREATE INDEX idx_messages_created_at ON messages(created_at DESC);
+
+-- Enable RLS for conversations
+ALTER TABLE conversations ENABLE ROW LEVEL SECURITY;
+ALTER TABLE messages ENABLE ROW LEVEL SECURITY;
+
+-- Policies for conversations
+CREATE POLICY "Users can view their own conversations" ON conversations
+  FOR SELECT USING (user_id = auth.uid()::uuid);
+CREATE POLICY "Users can insert their own conversations" ON conversations
+  FOR INSERT WITH CHECK (user_id = auth.uid()::uuid);
+CREATE POLICY "Users can update their own conversations" ON conversations
+  FOR UPDATE USING (user_id = auth.uid()::uuid);
+CREATE POLICY "Users can delete their own conversations" ON conversations
+  FOR DELETE USING (user_id = auth.uid()::uuid);
+
+-- Policies for messages (must match conversation ownership)
+CREATE POLICY "Users can view messages in their conversations" ON messages
+  FOR SELECT USING (
+    conversation_id IN (SELECT id FROM conversations WHERE user_id = auth.uid()::uuid)
+  );
+CREATE POLICY "Users can insert messages in their conversations" ON messages
+  FOR INSERT WITH CHECK (
+    conversation_id IN (SELECT id FROM conversations WHERE user_id = auth.uid()::uuid)
+  );
+CREATE POLICY "Users can delete messages in their conversations" ON messages
+  FOR DELETE USING (
+    conversation_id IN (SELECT id FROM conversations WHERE user_id = auth.uid()::uuid)
   ); 

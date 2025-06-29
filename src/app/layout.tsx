@@ -9,6 +9,7 @@ import {
   UserButton,
 } from "@clerk/nextjs";
 import OnboardingGuard from "@/components/OnboardingGuard";
+import Navigation from "@/components/Navigation";
 import "./globals.css";
 
 const geistSans = Geist({
@@ -63,6 +64,9 @@ export default function RootLayout({
               </div>
             </div>
           </header>
+          <SignedIn>
+            <Navigation />
+          </SignedIn>
           <OnboardingGuard>
             {children}
           </OnboardingGuard>

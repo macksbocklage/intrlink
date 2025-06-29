@@ -69,7 +69,8 @@ export default function DocumentUploader({ onUploadSuccess, onUploadError }: Doc
     accept: {
       'application/pdf': ['.pdf'],
       'application/vnd.openxmlformats-officedocument.wordprocessingml.document': ['.docx'],
-      'text/plain': ['.txt'],
+      'text/plain': ['.txt', '.md'],
+      'text/markdown': ['.md'],
     },
     maxFiles: 1,
     disabled: uploading,
@@ -116,7 +117,7 @@ export default function DocumentUploader({ onUploadSuccess, onUploadError }: Doc
                 {isDragActive ? 'Drop your file here' : 'Upload your SOP'}
               </p>
               <p className="text-sm text-gray-500 mt-1">
-                Drag and drop a PDF, DOCX, or TXT file, or click to browse
+                Drag and drop a PDF, DOCX, TXT, or MD file, or click to browse
               </p>
               <p className="text-xs text-gray-400 mt-2">
                 Maximum file size: 10MB
